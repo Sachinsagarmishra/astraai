@@ -1,6 +1,22 @@
 const BASE_URL = 'http://72.60.99.220:3001/api';
 
 export const api = {
+  async get<T>(endpoint: string): Promise<T> {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error ${response.status}`);
+    }
+
+    return response.json();
+  },
+
   async post<T>(endpoint: string, body: any): Promise<T> {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
@@ -18,3 +34,4 @@ export const api = {
     return response.json();
   }
 };
+export { BASE_URL };

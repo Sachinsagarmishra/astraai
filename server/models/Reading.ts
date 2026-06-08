@@ -1,4 +1,4 @@
-import db from '../db/index.js';
+import { execute } from '../db/index.js';
 
 export interface Reading {
   id?: number;
@@ -8,9 +8,11 @@ export interface Reading {
 }
 
 export class ReadingModel {
-  static create(data: { reading_text: string; user_id?: number }): number | bigint {
-    const stmt = db.prepare('INSERT INTO palm_readings (reading_text, user_id) VALUES (?, ?)');
-    const info = stmt.run(data.reading_text, data.user_id || null);
-    return info.lastInsertRowid;
+  static async create(data: { reading_text: string; user_id?: number }): Promise<number | bigint> {
+    const result = await execute(
+      'INSERT INTO palm_readings (reading_text, user_id) VALUES (?, ?)',
+      [data.reading_text, data.user_id || null]
+    );
+    return result.insertId;
   }
 }

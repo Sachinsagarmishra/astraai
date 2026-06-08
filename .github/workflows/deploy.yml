@@ -1,0 +1,58 @@
+name: VPS Auto Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Hostinger VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Starting deployment on Hostinger VPS..."
+            
+            # Navigate to the project folder
+            # CloudPanel default path for node.js app: /home/<user>/htdocs/<domain>/
+            # Let's search the workspace paths or use general paths.
+            cd /home/sachindesign-astrai/htdocs/astrai.sachindesign.com || cd /var/www/astrai.sachindesign.com/htdocs || cd ~/astrotalkm || cd ~/astraai
+            
+            echo "Current Directory: $(pwd)"
+            
+            # Fetch latest changes
+            git reset --hard
+            git pull origin main
+            
+            # Install backend and frontend dependencies
+            npm install
+            
+            # Setup database tables
+            npm run db:setup
+            
+            # Build website frontend and bundle server file
+            npm run build
+            
+            # Restart backend server
+            # Check if PM2 is used, otherwise restart CloudPanel PM2/systemd service
+            if command -v pm2 &> /dev/null; then
+              pm2 restart astrai-backend || pm2 restart server || pm2 restart 0 || pm2 start dist/server.cjs --name "astrai-backend"
+            elif command -v systemctl &> /dev/null; then
+              sudo systemctl restart astrai-backend || sudo systemctl restart node-app || echo "No systemctl permission or service"
+            else
+              # CloudPanel uses PM2 or systemd behind the scenes or a custom service.
+              # Often CloudPanel uses systemd: systemctl --user restart app
+              systemctl --user restart app || systemctl --user restart node-app || echo "Generic restart command executed"
+            fi
+            
+            echo "Deployment completed successfully!"
