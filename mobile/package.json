@@ -3,18 +3,18 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@react-native-async-storage/async-storage": "2.2.0",
-    "expo": "~56.0.9",
-    "expo-image-picker": "~56.0.16",
-    "expo-status-bar": "~56.0.4",
-    "lucide-react-native": "^1.17.0",
-    "react": "19.2.3",
-    "react-native": "0.85.3",
-    "react-native-svg": "15.15.4"
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "expo": "~51.0.0",
+    "expo-image-picker": "~15.0.7",
+    "expo-status-bar": "~1.12.1",
+    "lucide-react-native": "^0.400.0",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-svg": "15.2.0"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "@types/react": "~18.2.45",
+    "typescript": "~5.3.3"
   },
   "scripts": {
     "start": "expo start",
