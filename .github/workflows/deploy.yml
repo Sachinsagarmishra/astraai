@@ -66,6 +66,7 @@ jobs:
             git reset --hard origin/main
 
             cat > .env <<EOF
+            NODE_ENV=production
             PORT=${APP_PORT}
             GEMINI_API_KEY=${GEMINI_API_KEY}
             ADMIN_PASSWORD=${ADMIN_PASSWORD}
