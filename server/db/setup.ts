@@ -133,6 +133,7 @@ async function runSetup() {
     }
 
     console.log("Database setup complete successfully!");
+    process.exit(0);
   } catch (error) {
     console.error("Failed to setup database tables:", error);
     process.exit(1);
