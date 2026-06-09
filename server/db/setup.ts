@@ -72,6 +72,24 @@ async function runSetup() {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      await execute(`
+        CREATE TABLE IF NOT EXISTS user_profiles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          phone TEXT NOT NULL UNIQUE,
+          full_name TEXT NOT NULL,
+          gender TEXT NOT NULL,
+          date_of_birth TEXT NOT NULL,
+          birth_time TEXT,
+          birth_place TEXT NOT NULL,
+          marital_status TEXT NOT NULL,
+          primary_concerns TEXT NOT NULL,
+          preferred_language TEXT DEFAULT 'English',
+          profile_completed INTEGER DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
     } else {
       // MySQL Queries
       await execute(`
@@ -137,6 +155,24 @@ async function runSetup() {
           image_url LONGTEXT,
           is_active TINYINT(1) DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      await execute(`
+        CREATE TABLE IF NOT EXISTS user_profiles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          phone VARCHAR(15) NOT NULL UNIQUE,
+          full_name VARCHAR(255) NOT NULL,
+          gender VARCHAR(20) NOT NULL,
+          date_of_birth DATE NOT NULL,
+          birth_time VARCHAR(10),
+          birth_place VARCHAR(255) NOT NULL,
+          marital_status VARCHAR(30) NOT NULL,
+          primary_concerns TEXT NOT NULL,
+          preferred_language VARCHAR(20) DEFAULT 'English',
+          profile_completed TINYINT(1) DEFAULT 1,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
       `);
     }

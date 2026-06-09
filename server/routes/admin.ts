@@ -201,4 +201,33 @@ router.post('/announcements/:id/activate', async (req, res) => {
   }
 });
 
+// --- User Profiles (Admin) ---
+
+// GET all user profiles
+router.get('/user-profiles', async (req, res) => {
+  try {
+    const profiles = await query('SELECT * FROM user_profiles ORDER BY created_at DESC');
+    res.json(profiles);
+  } catch (err) {
+    console.error('Failed to fetch user profiles:', err);
+    res.status(500).json({ error: 'Failed to fetch user profiles' });
+  }
+});
+
+// GET a single user profile by phone
+router.get('/user-profiles/:phone', async (req, res) => {
+  const { phone } = req.params;
+  try {
+    const rows = await query('SELECT * FROM user_profiles WHERE phone = ?', [phone]);
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.status(404).json({ error: 'Profile not found' });
+    }
+  } catch (err) {
+    console.error('Failed to fetch user profile:', err);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
 export default router;

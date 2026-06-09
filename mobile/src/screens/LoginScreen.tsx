@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Phone, Lock, ArrowRight } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface LoginScreenProps {
-  onLogin: () => void;
+  onLogin: (phone: string) => void;
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -26,9 +27,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     if (otp.length < 6) return;
     setIsLoading(true);
     // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
-      onLogin();
+      await AsyncStorage.setItem('userPhone', phone);
+      onLogin(phone);
     }, 1000);
   };
 

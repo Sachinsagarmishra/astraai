@@ -8,6 +8,7 @@ import { api } from './src/services/api';
 // Import Screens
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import AccountSetupScreen from './src/screens/AccountSetupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import JaapScreen from './src/screens/JaapScreen';
 import PalmReadingScreen from './src/screens/PalmReadingScreen';
@@ -16,13 +17,14 @@ import PujaDetailScreen from './src/screens/PujaDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
-type Screen = 'onboarding' | 'login' | 'home' | 'jaap' | 'palmReading' | 'puja' | 'pujaDetail' | 'profile' | 'subscription';
+type Screen = 'onboarding' | 'login' | 'accountSetup' | 'home' | 'jaap' | 'palmReading' | 'puja' | 'pujaDetail' | 'profile' | 'subscription';
 
 const CURRENT_APP_VERSION = '1.0.0';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen | null>(null);
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
+  const [userPhone, setUserPhone] = useState<string>('');
   
   // Dynamic updates and maintenance state
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -79,11 +81,16 @@ export default function App() {
       try {
         const onboardingCompleted = await AsyncStorage.getItem('hasCompletedOnboarding') === 'true';
         const isLoggedIn = await AsyncStorage.getItem('isAuthenticated') === 'true';
+        const profileCompleted = await AsyncStorage.getItem('profileCompleted') === 'true';
+        const savedPhone = await AsyncStorage.getItem('userPhone') || '';
 
         if (!onboardingCompleted) {
           setCurrentScreen('onboarding');
         } else if (!isLoggedIn) {
           setCurrentScreen('login');
+        } else if (!profileCompleted && savedPhone) {
+          setUserPhone(savedPhone);
+          setCurrentScreen('accountSetup');
         } else {
           setCurrentScreen('home');
         }
@@ -99,8 +106,27 @@ export default function App() {
     setCurrentScreen('login');
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (phone: string) => {
     await AsyncStorage.setItem('isAuthenticated', 'true');
+    setUserPhone(phone);
+
+    // Check if profile already exists (returning user)
+    try {
+      const profileCheck = await api.get<{ exists: boolean }>(`/profile/${phone}`);
+      if (profileCheck.exists) {
+        await AsyncStorage.setItem('profileCompleted', 'true');
+        setCurrentScreen('home');
+      } else {
+        setCurrentScreen('accountSetup');
+      }
+    } catch (err) {
+      console.warn('Profile check failed, showing account setup:', err);
+      setCurrentScreen('accountSetup');
+    }
+  };
+
+  const handleAccountSetupComplete = async () => {
+    await AsyncStorage.setItem('profileCompleted', 'true');
     setCurrentScreen('home');
   };
 
@@ -177,6 +203,8 @@ export default function App() {
         return <OnboardingScreen onComplete={handleOnboardingComplete} />;
       case 'login':
         return <LoginScreen onLogin={handleLogin} />;
+      case 'accountSetup':
+        return <AccountSetupScreen phone={userPhone} onComplete={handleAccountSetupComplete} />;
       case 'home':
         return <HomeScreen onNavigate={(screen) => setCurrentScreen(screen as Screen)} />;
       case 'jaap':
