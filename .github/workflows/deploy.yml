@@ -1,6 +1,7 @@
 name: VPS Auto Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,44 +16,80 @@ jobs:
 
       - name: Deploy to Hostinger VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          APP_DIR: /home/sachindesign-astrai/htdocs/astrai.sachindesign.com
+          APP_NAME: astrai-backend
+          APP_PORT: "3001"
+          REPO_URL: https://github.com/${{ github.repository }}.git
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
+          envs: APP_DIR,APP_NAME,APP_PORT,REPO_URL,GEMINI_API_KEY,ADMIN_PASSWORD,DB_HOST,DB_USER,DB_PASSWORD,DB_NAME,DB_PORT
+          command_timeout: 20m
           script: |
+            set -Eeuo pipefail
+
             echo "Starting deployment on Hostinger VPS..."
-            
-            # Navigate to the project folder
-            # CloudPanel default path for node.js app: /home/<user>/htdocs/<domain>/
-            # Let's search the workspace paths or use general paths.
-            cd /home/sachindesign-astrai/htdocs/astrai.sachindesign.com || cd /var/www/astrai.sachindesign.com/htdocs || cd ~/astrotalkm || cd ~/astraai
-            
-            echo "Current Directory: $(pwd)"
-            
-            # Fetch latest changes
-            git reset --hard
-            git pull origin main
-            
-            # Install backend and frontend dependencies
-            npm install
-            
-            # Setup database tables
-            npm run db:setup
-            
-            # Build website frontend and bundle server file
-            npm run build
-            
-            # Restart backend server
-            # Check if PM2 is used, otherwise restart CloudPanel PM2/systemd service
-            if command -v pm2 &> /dev/null; then
-              pm2 restart astrai-backend || pm2 restart server || pm2 restart 0 || pm2 start dist/server.cjs --name "astrai-backend"
-            elif command -v systemctl &> /dev/null; then
-              sudo systemctl restart astrai-backend || sudo systemctl restart node-app || echo "No systemctl permission or service"
-            else
-              # CloudPanel uses PM2 or systemd behind the scenes or a custom service.
-              # Often CloudPanel uses systemd: systemctl --user restart app
-              systemctl --user restart app || systemctl --user restart node-app || echo "Generic restart command executed"
+            echo "Target directory: ${APP_DIR}"
+
+            mkdir -p "${APP_DIR}"
+            cd "${APP_DIR}"
+
+            if [ ! -d .git ]; then
+              if [ -n "$(find . -mindepth 1 -maxdepth 1 -not -name '.env' -print -quit)" ]; then
+                echo "ERROR: ${APP_DIR} is not a Git checkout and is not empty."
+                echo "Move existing files aside or clone ${REPO_URL} into this exact CloudPanel root once."
+                exit 1
+              fi
+
+              echo "No Git checkout found. Cloning repository into CloudPanel root..."
+              git clone "${REPO_URL}" .
             fi
-            
+
+            git remote set-url origin "${REPO_URL}"
+            git fetch origin main
+            git reset --hard
+            git checkout main
+            git reset --hard origin/main
+
+            cat > .env <<EOF
+            PORT=${APP_PORT}
+            GEMINI_API_KEY=${GEMINI_API_KEY}
+            ADMIN_PASSWORD=${ADMIN_PASSWORD}
+            DB_HOST=${DB_HOST}
+            DB_USER=${DB_USER}
+            DB_PASSWORD=${DB_PASSWORD}
+            DB_NAME=${DB_NAME}
+            DB_PORT=${DB_PORT}
+            EOF
+
+            npm ci
+            npm run db:setup
+            npm run build
+
+            if command -v pm2 >/dev/null 2>&1; then
+              if pm2 describe "${APP_NAME}" >/dev/null 2>&1; then
+                pm2 restart "${APP_NAME}" --update-env
+              else
+                pm2 start npm --name "${APP_NAME}" -- start
+              fi
+
+              pm2 save
+            else
+              pkill -f "dist/server.cjs" || true
+              nohup npm start > app.log 2>&1 &
+            fi
+
+            sleep 3
+            curl --fail --silent --show-error "http://127.0.0.1:${APP_PORT}/" >/dev/null
+
             echo "Deployment completed successfully!"
