@@ -128,4 +128,77 @@ router.post('/config', async (req, res) => {
   }
 });
 
+// GET all announcements
+router.get('/announcements', async (req, res) => {
+  try {
+    const list = await query('SELECT * FROM announcements ORDER BY id DESC');
+    res.json(list);
+  } catch (err) {
+    console.error('Failed to load announcements:', err);
+    res.status(500).json({ error: 'Failed to load announcements' });
+  }
+});
+
+// POST create announcement
+router.post('/announcements', async (req, res) => {
+  const { title, message, image_url, is_active } = req.body;
+  try {
+    if (is_active) {
+      await execute('UPDATE announcements SET is_active = 0');
+    }
+    const result = await execute(
+      'INSERT INTO announcements (title, message, image_url, is_active) VALUES (?, ?, ?, ?)',
+      [title || '', message || '', image_url || null, is_active ? 1 : 0]
+    );
+    res.json({ id: result.insertId });
+  } catch (err) {
+    console.error('Failed to create announcement:', err);
+    res.status(500).json({ error: 'Failed to create announcement' });
+  }
+});
+
+// PUT update announcement
+router.put('/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, message, image_url, is_active } = req.body;
+  try {
+    if (is_active) {
+      await execute('UPDATE announcements SET is_active = 0');
+    }
+    await execute(
+      'UPDATE announcements SET title = ?, message = ?, image_url = ?, is_active = ? WHERE id = ?',
+      [title || '', message || '', image_url || null, is_active ? 1 : 0, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to update announcement:', err);
+    res.status(500).json({ error: 'Failed to update announcement' });
+  }
+});
+
+// DELETE announcement
+router.delete('/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await execute('DELETE FROM announcements WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to delete announcement:', err);
+    res.status(500).json({ error: 'Failed to delete announcement' });
+  }
+});
+
+// POST activate announcement (Set Immediate)
+router.post('/announcements/:id/activate', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await execute('UPDATE announcements SET is_active = 0');
+    await execute('UPDATE announcements SET is_active = 1 WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to activate announcement:', err);
+    res.status(500).json({ error: 'Failed to activate announcement' });
+  }
+});
+
 export default router;

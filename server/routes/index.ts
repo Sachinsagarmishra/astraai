@@ -12,15 +12,22 @@ router.post('/palm-reading', PalmReadingController.readPalm);
 router.get('/app-config', async (req, res) => {
   try {
     const config = await query('SELECT * FROM app_config ORDER BY id DESC LIMIT 1');
-    res.json(config[0] || {
+    const activeAnnouncement = await query('SELECT * FROM announcements WHERE is_active = 1 ORDER BY id DESC LIMIT 1');
+
+    const configData = config[0] || {
       min_app_version: '1.0.0',
       current_app_version: '1.0.0',
       force_update: 0,
       update_url: 'https://play.google.com/store',
-      announcement_title: '',
-      announcement_message: '',
-      show_announcement: 0,
       maintenance_mode: 0
+    };
+
+    res.json({
+      ...configData,
+      announcement_title: activeAnnouncement[0]?.title || '',
+      announcement_message: activeAnnouncement[0]?.message || '',
+      announcement_image: activeAnnouncement[0]?.image_url || '',
+      show_announcement: activeAnnouncement.length > 0 ? 1 : 0
     });
   } catch (err) {
     console.error('Failed to load app config:', err);

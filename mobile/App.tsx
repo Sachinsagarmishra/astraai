@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Linking, Modal, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, SafeAreaView, Platform, Linking, Modal, ActivityIndicator, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Home, CircleDot, Sparkles, BookOpen, User, AlertTriangle, RefreshCw, Bell } from 'lucide-react-native';
@@ -66,7 +66,8 @@ export default function App() {
         if (config.show_announcement === 1 && config.announcement_title) {
           setAnnouncement({
             title: config.announcement_title,
-            message: config.announcement_message
+            message: config.announcement_message,
+            image: config.announcement_image || null
           });
           setShowAnnouncementModal(true);
         }
@@ -219,6 +220,9 @@ export default function App() {
                 <Text style={styles.announcementHeaderTitle}>Announcement</Text>
               </View>
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
+              {announcement.image ? (
+                <Image source={{ uri: announcement.image }} style={styles.announcementImage} />
+              ) : null}
               <Text style={styles.announcementMessage}>{announcement.message}</Text>
               <TouchableOpacity
                 style={styles.closeAnnouncementButton}
@@ -435,6 +439,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1c1917',
     marginBottom: 8,
+  },
+  announcementImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 16,
+    marginBottom: 12,
+    resizeMode: 'cover',
   },
   announcementMessage: {
     fontSize: 14,

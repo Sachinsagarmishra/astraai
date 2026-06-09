@@ -61,6 +61,17 @@ async function runSetup() {
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      await execute(`
+        CREATE TABLE IF NOT EXISTS announcements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          message TEXT NOT NULL,
+          image_url TEXT,
+          is_active INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
     } else {
       // MySQL Queries
       await execute(`
@@ -115,6 +126,17 @@ async function runSetup() {
           show_announcement TINYINT(1) DEFAULT 0,
           maintenance_mode TINYINT(1) DEFAULT 0,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        );
+      `);
+
+      await execute(`
+        CREATE TABLE IF NOT EXISTS announcements (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          image_url LONGTEXT,
+          is_active TINYINT(1) DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
     }

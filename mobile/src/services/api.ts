@@ -1,4 +1,4 @@
-const BASE_URL = 'http://72.60.99.220:3001/api';
+const BASE_URL = 'https://astrai.sachindesign.com/api';
 
 export const api = {
   async get<T>(endpoint: string): Promise<T> {
