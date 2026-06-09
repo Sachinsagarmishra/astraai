@@ -85,6 +85,12 @@ jobs:
 
             if command -v pm2 >/dev/null 2>&1; then
               pm2 delete "${APP_NAME}" || true
+            fi
+
+            # Kill any rogue process running on port 3001
+            npx kill-port "${APP_PORT}" || true
+
+            if command -v pm2 >/dev/null 2>&1; then
               NODE_ENV=production pm2 start npm --name "${APP_NAME}" --cwd "${APP_DIR}" -- start
               pm2 save
             else
@@ -92,6 +98,7 @@ jobs:
                 kill "$(cat app.pid)"
                 sleep 2
               fi
+              npx kill-port "${APP_PORT}" || true
 
               nohup npm start > app.log 2>&1 < /dev/null &
               echo "$!" > app.pid
