@@ -5,13 +5,14 @@ const router = Router();
 
 // Admin Login
 router.post('/login', async (req, res) => {
-  const { password } = req.body;
+  const { username, password } = req.body;
+  const adminUsername = process.env.ADMIN_USERNAME || 'admin';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Mercedes@001';
   
-  if (password === adminPassword) {
+  if (username === adminUsername && password === adminPassword) {
     res.json({ token: 'admin-session-token-astrai-2026' });
   } else {
-    res.status(401).json({ error: 'Invalid password' });
+    res.status(401).json({ error: 'Invalid username or password' });
   }
 });
 

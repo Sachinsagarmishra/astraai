@@ -22,6 +22,7 @@ interface AppConfig {
 
 export default function AdminPanel() {
   const [token, setToken] = useState<string | null>(sessionStorage.getItem('adminToken'));
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loadingStats, setLoadingStats] = useState(true);
@@ -47,14 +48,14 @@ export default function AdminPanel() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
       if (res.ok && data.token) {
         sessionStorage.setItem('adminToken', data.token);
         setToken(data.token);
       } else {
-        setLoginError(data.error || 'Incorrect Admin Password');
+        setLoginError(data.error || 'Incorrect Admin Username or Password');
       }
     } catch (err) {
       setLoginError('Server connection failed.');
@@ -140,6 +141,20 @@ export default function AdminPanel() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+            <div>
+              <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
+                Admin Username
+              </label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. admin"
+                className="w-full bg-[#0f172a]/80 border border-[#334155] rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#ea580c]/50 focus:border-[#ea580c] transition-all"
+              />
+            </div>
+
             <div>
               <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">
                 Secret Access Key
