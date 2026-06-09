@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: vps-auto-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -72,7 +76,7 @@ jobs:
             DB_PORT=${DB_PORT}
             EOF
 
-            npm ci
+            npm ci --no-audit --no-fund
             npm run db:setup
             npm run build
 
@@ -85,11 +89,20 @@ jobs:
 
               pm2 save
             else
-              pkill -f "dist/server.cjs" || true
-              nohup npm start > app.log 2>&1 &
+              if [ -f app.pid ] && kill -0 "$(cat app.pid)" >/dev/null 2>&1; then
+                kill "$(cat app.pid)"
+                sleep 2
+              fi
+
+              nohup npm start > app.log 2>&1 < /dev/null &
+              echo "$!" > app.pid
             fi
 
             sleep 3
-            curl --fail --silent --show-error "http://127.0.0.1:${APP_PORT}/" >/dev/null
+            if ! curl --fail --silent --show-error "http://127.0.0.1:${APP_PORT}/" >/dev/null; then
+              echo "Application health check failed. Recent app log:"
+              tail -n 80 app.log || true
+              exit 1
+            fi
 
             echo "Deployment completed successfully!"
